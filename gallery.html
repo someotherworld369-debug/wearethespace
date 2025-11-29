@@ -5,70 +5,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WeAreTheSpace Gallery</title>
 <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #f0f0f0;
-    font-family: sans-serif;
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f0f0f0;
+  font-family: sans-serif;
+}
 
-  .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transform-origin: top center;
-    transition: transform 0.2s ease;
-    width: 100%;
-    height: 100%;
-  }
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transform-origin: top center;
+  width: 100%;
+  height: 100%;
+}
 
-  a.back-arrow {
-    font-size: 40px;
-    text-decoration: none;
-    color: #333;
-    margin-bottom: 10px;
-  }
+a.back-arrow {
+  font-size: 40px;
+  text-decoration: none;
+  color: #333;
+  margin-bottom: 10px;
+}
 
-  #galleryArea {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+#galleryArea {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
-  .gallery-grid {
-    display: grid;
-    gap: 0;
-    width: 100%;
-    height: 100%;
-    grid-auto-rows: 1fr; /* equal height for rows */
-  }
+.gallery-grid {
+  display: grid;
+  gap: 0;
+}
 
-  .submission-tile {
-    display: grid;
-    gap: 0;
-    width: 100%;
-    height: 100%;
-    aspect-ratio: 1 / 1; /* keeps each submission square */
-  }
+.submission-tile {
+  display: grid;
+  gap: 0;
+  aspect-ratio: 1 / 1; /* square submissions */
+}
 
-  .submission-tile div {
-    width: 100%;
-    height: 100%;
-  }
-
-  .small-note {
-    text-align: center;
-    color: #888;
-    font-size: 0.9rem;
-  }
+.submission-tile div {
+  width: 100%;
+  height: 100%;
+}
 </style>
 </head>
 <body>
@@ -94,7 +83,6 @@ async function fetchFromApi() {
       cells: s.cells
     }));
   } catch (err) {
-    console.warn('Failed to fetch from API, falling back to localStorage:', err);
     const fallback = JSON.parse(localStorage.getItem('artGridSubmissions') || '[]');
     return fallback;
   }
@@ -106,9 +94,9 @@ function makeDesignTile(sub) {
   outer.style.gridTemplateColumns = `repeat(${sub.size}, 1fr)`;
   outer.style.gridTemplateRows = `repeat(${sub.size}, 1fr)`;
 
-  sub.cells.forEach(cellColor => {
+  sub.cells.forEach(color => {
     const c = document.createElement('div');
-    c.style.background = cellColor || '#ffffff';
+    c.style.background = color || '#ffffff';
     outer.appendChild(c);
   });
 
@@ -118,7 +106,7 @@ function makeDesignTile(sub) {
 function renderSubs(subs) {
   galleryArea.innerHTML = '';
 
-  if (subs.length === 0) {
+  if (!subs.length) {
     galleryArea.innerHTML = '<p class="small-note">No submissions yet.</p>';
     return;
   }
@@ -130,6 +118,8 @@ function renderSubs(subs) {
   container.className = 'gallery-grid';
   container.style.gridTemplateColumns = `repeat(${dim}, 1fr)`;
   container.style.gridTemplateRows = `repeat(${dim}, 1fr)`;
+  container.style.width = '100%';
+  container.style.height = '100%';
 
   subs.forEach(sub => {
     const tile = makeDesignTile(sub);
@@ -138,22 +128,26 @@ function renderSubs(subs) {
 
   galleryArea.appendChild(container);
 
-  // Dynamic zoom to fit viewport
-  const scale = Math.min(
-    1,
-    Math.sqrt((window.innerWidth * window.innerHeight) / (dim * dim * 10000)) // heuristic
-  );
-  document.querySelector('.container').style.transform = `scale(${scale})`;
+  // Calculate maximum size for each submission tile
+  const containerWidth = galleryArea.clientWidth;
+  const containerHeight = galleryArea.clientHeight;
+  const tileSize = Math.min(containerWidth, containerHeight) / dim;
+
+  container.childNodes.forEach(tile => {
+    tile.style.width = `${tileSize}px`;
+    tile.style.height = `${tileSize}px`;
+  });
 }
 
 async function loadAndRender() {
   const subs = await fetchFromApi();
   renderSubs(subs);
 
-  // Continuously poll for new submissions every 2 seconds
+  // Poll for new submissions
   setTimeout(loadAndRender, 2000);
 }
 
+window.addEventListener('resize', loadAndRender);
 loadAndRender();
 </script>
 </body>
