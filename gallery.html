@@ -41,25 +41,25 @@
     #galleryArea {
       width: 100%;
       height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .gallery-grid {
       display: grid;
-      width: 100%;
-      height: 100%;
-      gap: 0;
+      gap: 5px; /* optional space between tiles */
+      justify-content: center;
+      align-content: center;
     }
 
     .design-tile {
-      width: 100%;
-      height: 100%;
       display: grid;
-      gap: 0;
-      border-radius: 0;
-      overflow: hidden;
+      gap: 1px; /* optional space between cells */
     }
 
     .design-tile div {
+      aspect-ratio: 1 / 1; /* force square cells */
       width: 100%;
       height: 100%;
     }
@@ -124,14 +124,13 @@
         return;
       }
 
-      // Compute dimensions for a square gallery
       const totalSubs = subs.length;
-      const dim = Math.ceil(Math.sqrt(totalSubs));
+      const gridDim = Math.ceil(Math.sqrt(totalSubs));
 
       const container = document.createElement('div');
       container.className = 'gallery-grid';
-      container.style.gridTemplateColumns = `repeat(${dim}, 1fr)`;
-      container.style.gridTemplateRows = `repeat(${dim}, 1fr)`;
+      container.style.gridTemplateColumns = `repeat(${gridDim}, auto)`;
+      container.style.gridTemplateRows = `repeat(${gridDim}, auto)`;
 
       subs.forEach(sub => {
         const tile = makeDesignTile(sub);
@@ -140,8 +139,11 @@
 
       galleryArea.appendChild(container);
 
-      // Continuous zoom out to fit viewport
-      const scale = Math.min(1, Math.sqrt(1 / totalSubs) * 2);
+      // Calculate max possible scale to fit all tiles on screen
+      const containerRect = container.getBoundingClientRect();
+      const scaleX = window.innerWidth / containerRect.width;
+      const scaleY = window.innerHeight / containerRect.height;
+      const scale = Math.min(scaleX, scaleY, 1);
       document.querySelector('.container').style.transform = `scale(${scale})`;
     }
 
@@ -150,6 +152,7 @@
       renderSubs(subs);
     }
 
+    window.addEventListener('resize', loadAndRender);
     loadAndRender();
   </script>
 </body>
